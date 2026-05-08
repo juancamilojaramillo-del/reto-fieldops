@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FieldOps · Dashboard de Órdenes de Trabajo</title>
+  <style>
+    :root {
+      --bg: #0a0e1f;
+      --bg-2: #0d1428;
+      --bg-card: #141c33;
+      --bg-card-hover: #1a2342;
+      --bg-row: #111a30;
+      --bg-row-alt: #131c34;
+      --border: #232c45;
+      --border-light: #2a3552;
+      --text: #e8ecf4;
+      --text-dim: #8a96ad;
+      --text-soft: #b4becf;
+
+      --accent: #4f8cff;
+      --accent-2: #00d9ff;
+      --accent-glow: #4f8cff33;
+
+      --prio-alta: #ff4d6d;
+      --prio-alta-bg: rgba(255,77,109,0.12);
+      --prio-media: #ffb020;
+      --prio-media-bg: rgba(255,176,32,0.12);
+      --prio-baja: #2ee59d;
+      --prio-baja-bg: rgba(46,229,157,0.12);
+
+      --estado-programada: #8a96ad;
+      --estado-proceso: #4f8cff;
+      --estado-completada: #2ee59d;
+
+      --gradient-1: linear-gradient(135deg, #4f8cff 0%, #00d9ff 100%);
+      --gradient-2: linear-gradient(135deg, #ff4d6d 0%, #ff8e53 100%);
+      --gradient-3: linear-gradient(135deg, #2ee59d 0%, #00d9ff 100%);
+      --gradient-4: linear-gradient(135deg, #ffb020 0%, #ff4d6d 100%);
+
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.5);
+      --shadow-glow: 0 0 24px var(--accent-glow);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      background-image:
+        radial-gradient(circle at 10% 0%, rgba(79,140,255,0.12), transparent 50%),
+        radial-gradient(circle at 90% 100%, rgba(46,229,157,0.06), transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(0,217,255,0.04), transparent 70%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px 16px;
+      line-height: 1.5;
+    }
+
+    .container { max-width: 1400px; margin: 0 auto; }
+
+    /* HEADER */
+    header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .brand-block {
+      display: flex; align-items: center; gap: 14px;
+    }
+    .brand-icon {
+      width: 44px; height: 44px;
+      background: var(--gradient-1);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      box-shadow: var(--shadow-glow);
+    }
+    .brand-text h1 {
+      font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
+    }
+    .brand-text p {
+      color: var(--text-dim); font-size: 12px; margin-top: 2px;
+    }
+    .header-status {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 12px; color: var(--text-soft);
+    }
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--estado-completada);
+      box-shadow: 0 0 12px var(--estado-completada);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    /* KPIs */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .kpi {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.25s;
+    }
+    .kpi:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent);
+      box-shadow: var(--shadow);
+    }
+    .kpi::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .kpi.k1::before { background: var(--gradient-1); }
+    .kpi.k2::before { background: var(--gradient-2); }
+    .kpi.k3::before { background: var(--gradient-3); }
+    .kpi.k4::before { background: var(--gradient-4); }
+
+    .kpi-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .kpi-label {
+      font-size: 11px; color: var(--text-dim); text-transform: uppercase;
+      letter-spacing: 0.8px; font-weight: 600;
+    }
+    .kpi-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .kpi.k1 .kpi-icon { background: rgba(79,140,255,0.15); }
+    .kpi.k2 .kpi-icon { background: rgba(255,77,109,0.15); }
+    .kpi.k3 .kpi-icon { background: rgba(46,229,157,0.15); }
+    .kpi.k4 .kpi-icon { background: rgba(255,176,32,0.15); }
+
+    .kpi-value { font-size: 32px; font-weight: 700; letter-spacing: -1px; }
+    .kpi.k1 .kpi-value { background: var(--gradient-1); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    .kpi.k2 .kpi-value { color: var(--prio-alta); }
+    .kpi.k3 .kpi-value { color: var(--estado-completada); }
+    .kpi.k4 .kpi-value { color: var(--prio-media); }
+
+    .kpi-trend {
+      font-size: 11px; color: var(--text-dim); margin-top: 4px;
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    /* CHARTS ROW */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 900px) {
+      .charts-row { grid-template-columns: 1fr; }
+    }
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+    .chart-title {
+      font-size: 14px; font-weight: 600; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+      color: var(--text);
+    }
+    .chart-title-icon { color: var(--accent); }
+
+    /* Bar chart */
+    .bar-chart { display: flex; flex-direction: column; gap: 12px; }
+    .bar-row { display: grid; grid-template-columns: 130px 1fr 60px; gap: 12px; align-items: center; }
+    .bar-label { font-size: 13px; color: var(--text-soft); }
+    .bar-track {
+      height: 26px; background: var(--bg-row); border-radius: 6px;
+      overflow: hidden; position: relative;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 6px;
+      display: flex; align-items: center; padding-left: 10px;
+      font-size: 11px; font-weight: 600; color: white;
+      transition: width 0.8s ease;
+      animation: growBar 1s ease-out;
+    }
+    @keyframes growBar { from { width: 0; } }
+    .bar-value { font-size: 13px; font-weight: 600; text-align: right; }
+
+    /* Donut chart */
+    .donut-wrap {
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+    }
+    .donut { position: relative; width: 180px; height: 180px; }
+    .donut svg { transform: rotate(-90deg); }
+    .donut-center {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%); text-align: center;
+    }
+    .donut-center .num { font-size: 28px; font-weight: 700; color: var(--text); }
+    .donut-center .lbl { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+    .donut-legend { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    .legend-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 10px; background: var(--bg-row); border-radius: 6px;
+      font-size: 12px;
+    }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+    .legend-label { flex: 1; color: var(--text-soft); }
+    .legend-value { font-weight: 600; }
+
+    /* TOOLBAR */
+    .toolbar {
+      display: flex; gap: 10px; flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .input, .select, .btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .input { flex: 1; min-width: 220px; }
+    .input:focus, .select:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .btn {
+      cursor: pointer; font-weight: 600;
+      background: var(--gradient-1);
+      color: #fff; border: none;
+      box-shadow: 0 4px 12px rgba(79,140,255,0.3);
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(79,140,255,0.4); }
+
+    /* TABLA */
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 16px 18px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-2);
+    }
+    .table-header h3 {
+      font-size: 15px; font-weight: 600;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .table-count {
+      font-size: 12px; color: var(--text-dim);
+      padding: 4px 10px; background: var(--bg-card); border-radius: 100px;
+    }
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead {
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--border-light);
+    }
+    th {
+      text-align: left; padding: 12px 16px;
+      font-size: 11px; font-weight: 700;
+      color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.6px;
+      cursor: pointer; user-select: none;
+      position: relative;
+      transition: color 0.15s;
+    }
+    th:hover { color: var(--text); }
+    th.sorted { color: var(--accent); }
+    th.sorted::after {
+      content: ''; position: absolute; right: 6px; top: 50%;
+      transform: translateY(-50%);
+      width: 0; height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+    }
+    th.sorted.asc::after { border-bottom: 5px solid var(--accent); }
+    th.sorted.desc::after { border-top: 5px solid var(--accent); }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+      animation: fadeIn 0.4s ease both;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    tbody tr:nth-child(even) { background: var(--bg-row-alt); }
+    tbody tr:hover { background: var(--bg-card-hover); }
+
+    td { padding: 12px 16px; vertical-align: middle; }
+    .cell-id { font-family: 'Courier New', monospace; font-size: 11px; color: var(--accent-2); }
+    .cell-titulo { font-weight: 500; color: var(--text); max-width: 280px; }
+    .cell-titulo small { display: block; color: var(--text-dim); font-weight: 400; font-size: 11px; margin-top: 2px; }
+    .cell-cliente { color: var(--text-soft); }
+
+    /* Badges */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 9px; border-radius: 100px;
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .badge-prio-alta { background: var(--prio-alta-bg); color: var(--prio-alta); }
+    .badge-prio-media { background: var(--prio-media-bg); color: var(--prio-media); }
+    .badge-prio-baja { background: var(--prio-baja-bg); color: var(--prio-baja); }
+    .badge-prio-alta::before, .badge-prio-media::before, .badge-prio-baja::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+    }
+    .badge-prio-alta::before { background: var(--prio-alta); box-shadow: 0 0 6px var(--prio-alta); }
+    .badge-prio-media::before { background: var(--prio-media); }
+    .badge-prio-baja::before { background: var(--prio-baja); }
+
+    .estado-pill {
+      display: inline-block;
+      padding: 4px 10px; border-radius: 6px;
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .estado-programada { background: rgba(138,150,173,0.15); color: var(--estado-programada); }
+    .estado-en_proceso { background: rgba(79,140,255,0.15); color: var(--estado-proceso); }
+    .estado-completada { background: rgba(46,229,157,0.15); color: var(--estado-completada); }
+
+    .vencida { color: var(--prio-alta); font-weight: 600; }
+
+    /* SKELETON */
+    .skeleton-row {
+      background: linear-gradient(90deg, var(--bg-row) 25%, var(--bg-card-hover) 50%, var(--bg-row) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      height: 50px; border-bottom: 1px solid var(--border);
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* EMPTY/ERROR */
+    .empty, .error-state {
+      text-align: center; padding: 60px 20px;
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-text { color: var(--text-dim); }
+    .error-state h3 { margin-bottom: 8px; color: var(--prio-alta); }
+
+    /* MOBILE */
+    @media (max-width: 700px) {
+      body { padding: 14px 10px; }
+      .toolbar { flex-direction: column; }
+      .input, .select, .btn { width: 100%; }
+      th:nth-child(4), td:nth-child(4),
+      th:nth-child(7), td:nth-child(7) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header>
+      <div class="brand-block">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-text">
+          <h1>FieldOps Dashboard</h1>
+          <p>Gestión de órdenes de trabajo · API v1</p>
+        </div>
+      </div>
+      <div class="header-status">
+        <div class="status-dot"></div>
+        <span>Sistema operativo</span>
+      </div>
+    </header>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi k1">
+        <div class="kpi-top">
+          <div class="kpi-label">Activas hoy</div>
+          <div class="kpi-icon">📋</div>
+        </div>
+        <div class="kpi-value" id="kpi-activas">—</div>
+        <div class="kpi-trend">↗ Total programadas hoy</div>
+      </div>
+      <div class="kpi k2">
+        <div class="kpi-top">
+          <div class="kpi-label">En proceso</div>
+          <div class="kpi-icon">🔧</div>
+        </div>
+        <div class="kpi-value" id="kpi-proceso">—</div>
+        <div class="kpi-trend">⚡ Trabajos activos</div>
+      </div>
+      <div class="kpi k3">
+        <div class="kpi-top">
+          <div class="kpi-label">Completadas</div>
+          <div class="kpi-icon">✓</div>
+        </div>
+        <div class="kpi-value" id="kpi-completadas">—</div>
+        <div class="kpi-trend">✓ Cerradas con éxito</div>
+      </div>
+      <div class="kpi k4">
+        <div class="kpi-top">
+          <div class="kpi-label">% cumplimiento</div>
+          <div class="kpi-icon">📊</div>
+        </div>
+        <div class="kpi-value" id="kpi-cumplimiento">—</div>
+        <div class="kpi-trend">📈 Eficiencia operativa</div>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title"><span class="chart-title-icon">📊</span>Desempeño por técnico</div>
+        <div class="bar-chart" id="barChart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title"><span class="chart-title-icon">🎯</span>Distribución por estado</div>
+        <div class="donut-wrap">
+          <div class="donut">
+            <svg width="180" height="180" viewBox="0 0 180 180" id="donutSvg"></svg>
+            <div class="donut-center">
+              <div class="num" id="donutTotal">0</div>
+              <div class="lbl">Órdenes</div>
+            </div>
+          </div>
+          <div class="donut-legend" id="donutLegend"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <input type="text" class="input" id="buscar" placeholder="🔍 Buscar por cliente, título o ID..." />
+      <select class="select" id="filtroEstado">
+        <option value="">Todos los estados</option>
+        <option value="programada">Programada</option>
+        <option value="en_proceso">En proceso</option>
+        <option value="completada">Completada</option>
+      </select>
+      <select class="select" id="filtroPrioridad">
+        <option value="">Toda prioridad</option>
+        <option value="alta">Alta</option>
+        <option value="media">Media</option>
+        <option value="baja">Baja</option>
+      </select>
+      <button class="btn" id="btnNueva">+ Nueva orden</button>
+    </div>
+
+    <!-- TABLA -->
+    <div class="table-card">
+      <div class="table-header">
+        <h3>📋 Órdenes de trabajo</h3>
+        <span class="table-count" id="tableCount">— órdenes</span>
+      </div>
+      <div class="table-wrap" id="tableWrap"></div>
+    </div>
+
+  </div>
+
+<script>
+const API_BASE = 'https://api.fieldops.dev/v1';
+const TOKEN = 'demo-token-fieldops-2026';
+const USE_MOCK = true;
+
+let mockDB = [
+  { id: 'OT-2026-0142', titulo: 'Mantenimiento preventivo tablero principal', cliente: 'Centro Comercial Plaza Bocagrande', direccion: 'Av. San Martín #5-23, Cartagena', tipoTrabajo: 'Mantenimiento preventivo', prioridad: 'alta', estado: 'programada', fechaProgramada: '2026-05-08T08:00:00', duracionEstimada: 120, tecnicoAsignado: 'Juan Pérez', equipoIntervenir: 'Tablero principal 220V/60A' },
+  { id: 'OT-2026-0143', titulo: 'Instalación tomacorrientes oficina', cliente: 'Hotel Las Américas', direccion: 'Anillo Vial Cielo Mar', tipoTrabajo: 'Instalación', prioridad: 'media', estado: 'en_proceso', fechaProgramada: '2026-05-08T10:30:00', duracionEstimada: 90, tecnicoAsignado: 'Carlos Ramírez', equipoIntervenir: '8 tomacorrientes dobles' },
+  { id: 'OT-2026-0144', titulo: 'Reparación cortocircuito área producción', cliente: 'Industrias Lácteas del Caribe', direccion: 'Zona Industrial Mamonal', tipoTrabajo: 'Mantenimiento correctivo', prioridad: 'alta', estado: 'en_proceso', fechaProgramada: '2026-05-08T07:00:00', duracionEstimada: 180, tecnicoAsignado: 'Juan Pérez', equipoIntervenir: 'Línea trifásica área 3' },
+  { id: 'OT-2026-0145', titulo: 'Inspección anual sistema eléctrico', cliente: 'Edificio Torre del Reloj', direccion: 'Centro Histórico', tipoTrabajo: 'Inspección', prioridad: 'baja', estado: 'programada', fechaProgramada: '2026-05-09T14:00:00', duracionEstimada: 240, tecnicoAsignado: 'María Gómez', equipoIntervenir: 'Sistema completo edificio' },
+  { id: 'OT-2026-0146', titulo: 'Cambio de breakers en subestación', cliente: 'Universidad Tecnológica', direccion: 'Pie de la Popa', tipoTrabajo: 'Mantenimiento correctivo', prioridad: 'media', estado: 'completada', fechaProgramada: '2026-05-07T09:00:00', duracionEstimada: 150, tecnicoAsignado: 'Carlos Ramírez', equipoIntervenir: '4 breakers 3x100A' },
+  { id: 'OT-2026-0147', titulo: 'Emergencia: planta eléctrica no arranca', cliente: 'Clínica Medihelp', direccion: 'Manga, Cartagena', tipoTrabajo: 'Emergencia', prioridad: 'alta', estado: 'programada', fechaProgramada: '2026-05-08T16:00:00', duracionEstimada: 120, tecnicoAsignado: 'Juan Pérez', equipoIntervenir: 'Planta diésel 100KVA' },
+  { id: 'OT-2026-0148', titulo: 'Iluminación parqueadero subterráneo', cliente: 'Edificio Mar Azul', direccion: 'Crespo, Cartagena', tipoTrabajo: 'Instalación', prioridad: 'baja', estado: 'completada', fechaProgramada: '2026-05-06T11:00:00', duracionEstimada: 200, tecnicoAsignado: 'María Gómez', equipoIntervenir: '24 lámparas LED 50W' },
+  { id: 'OT-2026-0149', titulo: 'Mantenimiento UPS sala de servidores', cliente: 'Empresa de Servicios Públicos', direccion: 'Bocagrande', tipoTrabajo: 'Mantenimiento preventivo', prioridad: 'media', estado: 'programada', fechaProgramada: '2026-05-09T08:00:00', duracionEstimada: 120, tecnicoAsignado: 'Carlos Ramírez', equipoIntervenir: 'UPS APC 10KVA' },
+  { id: 'OT-2026-0150', titulo: 'Revisión transformador 75KVA', cliente: 'Plaza San Pedro Mall', direccion: 'Pie de la Popa', tipoTrabajo: 'Inspección', prioridad: 'media', estado: 'completada', fechaProgramada: '2026-05-05T08:00:00', duracionEstimada: 180, tecnicoAsignado: 'Juan Pérez', equipoIntervenir: 'Transformador trifásico' },
+  { id: 'OT-2026-0151', titulo: 'Instalación cableado red eléctrica', cliente: 'Restaurante La Cevichería', direccion: 'Centro Histórico', tipoTrabajo: 'Instalación', prioridad: 'baja', estado: 'en_proceso', fechaProgramada: '2026-05-08T13:00:00', duracionEstimada: 240, tecnicoAsignado: 'María Gómez', equipoIntervenir: 'Cableado 200m AWG 12' }
+];
+
+async function mockFetch(method, path, body) {
+  await new Promise(r => setTimeout(r, 400 + Math.random() * 500));
+  if (Math.random() < 0.05) throw new Error('Error de conexión simulado');
+
+  if (method === 'GET' && path.startsWith('/ordenes')) {
+    const url = new URL('http://x' + path);
+    const estado = url.searchParams.get('estado');
+    const prioridad = url.searchParams.get('prioridad');
+    const buscar = url.searchParams.get('buscar')?.toLowerCase();
+    let result = [...mockDB];
+    if (estado) result = result.filter(o => o.estado === estado);
+    if (prioridad) result = result.filter(o => o.prioridad === prioridad);
+    if (buscar) result = result.filter(o =>
+      o.titulo.toLowerCase().includes(buscar) ||
+      o.cliente.toLowerCase().includes(buscar) ||
+      o.id.toLowerCase().includes(buscar)
+    );
+    return result;
+  }
+
+  if (method === 'POST' && path === '/ordenes') {
+    const nueva = { ...body, id: 'OT-2026-' + String(Date.now()).slice(-4).padStart(4,'0'), estado: 'programada' };
+    mockDB.unshift(nueva);
+    return nueva;
+  }
+
+  throw new Error('Endpoint no encontrado');
+}
+
+async function apiFetch(method, path, body) {
+  if (USE_MOCK) return mockFetch(method, path, body);
+  const res = await fetch(API_BASE + path, {
+    method,
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+let ordenes = [];
+let listaActual = [];
+let sortKey = 'fechaProgramada';
+let sortDir = 'desc';
+const $ = id => document.getElementById(id);
+
+function fmtFecha(iso) {
+  const d = new Date(iso);
+  const dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]} · ${hh}:${mm}`;
+}
+
+function estaVencida(o) {
+  if (o.estado === 'completada') return false;
+  return new Date(o.fechaProgramada) < new Date();
+}
+
+function labelEstado(e) {
+  return { 'programada':'Programada', 'en_proceso':'En proceso', 'completada':'Completada' }[e] || e;
+}
+
+function ordenar(lista) {
+  return [...lista].sort((a,b) => {
+    let va = a[sortKey], vb = b[sortKey];
+    if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+}
+
+function renderSkeletons() {
+  $('tableWrap').innerHTML = '<div>' + Array(5).fill('<div class="skeleton-row"></div>').join('') + '</div>';
+}
+
+function renderError(msg) {
+  $('tableWrap').innerHTML = `
+    <div class="error-state">
+      <div class="empty-icon">⚠️</div>
+      <h3>No se pudo cargar</h3>
+      <p class="empty-text" style="margin-bottom:16px">${msg}</p>
+      <button class="btn" onclick="cargar()">Reintentar</button>
+    </div>`;
+}
+
+function renderTabla() {
+  const lista = ordenar(listaActual);
+  $('tableCount').textContent = lista.length + ' ' + (lista.length === 1 ? 'orden' : 'órdenes');
+
+  if (!lista.length) {
+    $('tableWrap').innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📭</div>
+        <p class="empty-text">Sin resultados</p>
+      </div>`;
+    return;
+  }
+
+  const cols = [
+    { key: 'id', label: 'ID' },
+    { key: 'titulo', label: 'Orden de trabajo' },
+    { key: 'cliente', label: 'Cliente' },
+    { key: 'tipoTrabajo', label: 'Tipo' },
+    { key: 'prioridad', label: 'Prioridad' },
+    { key: 'estado', label: 'Estado' },
+    { key: 'tecnicoAsignado', label: 'Técnico' },
+    { key: 'fechaProgramada', label: 'Fecha' }
+  ];
+
+  const thead = cols.map(c => {
+    const sortClass = c.key === sortKey ? `sorted ${sortDir}` : '';
+    return `<th class="${sortClass}" data-sort="${c.key}">${c.label}</th>`;
+  }).join('');
+
+  const tbody = lista.map(o => {
+    const venc = estaVencida(o);
+    return `
+      <tr>
+        <td class="cell-id">${o.id}</td>
+        <td class="cell-titulo">${o.titulo}<small>${o.equipoIntervenir}</small></td>
+        <td class="cell-cliente">${o.cliente}</td>
+        <td>${o.tipoTrabajo}</td>
+        <td><span class="badge badge-prio-${o.prioridad}">${o.prioridad}</span></td>
+        <td><span class="estado-pill estado-${o.estado}">${labelEstado(o.estado)}</span></td>
+        <td>${o.tecnicoAsignado}</td>
+        <td class="${venc ? 'vencida' : ''}">${fmtFecha(o.fechaProgramada)}${venc ? ' ⚠️' : ''}</td>
+      </tr>`;
+  }).join('');
+
+  $('tableWrap').innerHTML = `<table><thead><tr>${thead}</tr></thead><tbody>${tbody}</tbody></table>`;
+
+  // Eventos de ordenamiento
+  $('tableWrap').querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const k = th.dataset.sort;
+      if (sortKey === k) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortKey = k; sortDir = 'asc'; }
+      renderTabla();
+    });
+  });
+}
+
+function renderKPIs() {
+  const hoy = new Date().toDateString();
+  const activasHoy = ordenes.filter(o =>
+    new Date(o.fechaProgramada).toDateString() === hoy && o.estado !== 'completada'
+  ).length;
+  const enProceso = ordenes.filter(o => o.estado === 'en_proceso').length;
+  const completadas = ordenes.filter(o => o.estado === 'completada').length;
+  const total = ordenes.length;
+  const cumplimiento = total > 0 ? Math.round((completadas / total) * 100) : 0;
+
+  $('kpi-activas').textContent = activasHoy;
+  $('kpi-proceso').textContent = enProceso;
+  $('kpi-completadas').textContent = completadas;
+  $('kpi-cumplimiento').textContent = cumplimiento + '%';
+}
+
+function renderBarChart() {
+  // Agrupar por técnico
+  const byTec = {};
+  ordenes.forEach(o => {
+    if (!byTec[o.tecnicoAsignado]) byTec[o.tecnicoAsignado] = { total: 0, completadas: 0 };
+    byTec[o.tecnicoAsignado].total++;
+    if (o.estado === 'completada') byTec[o.tecnicoAsignado].completadas++;
+  });
+
+  const tecnicos = Object.entries(byTec).sort((a,b) => b[1].total - a[1].total);
+  const max = Math.max(...tecnicos.map(t => t[1].total));
+  const gradients = ['var(--gradient-1)', 'var(--gradient-3)', 'var(--gradient-4)', 'var(--gradient-2)'];
+
+  $('barChart').innerHTML = tecnicos.map(([nombre, d], i) => {
+    const pct = (d.total / max) * 100;
+    return `
+      <div class="bar-row">
+        <div class="bar-label">${nombre}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct}%; background:${gradients[i % gradients.length]}">
+            ${d.completadas} ✓
+          </div>
+        </div>
+        <div class="bar-value">${d.total}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderDonut() {
+  const counts = {
+    programada: ordenes.filter(o => o.estado === 'programada').length,
+    en_proceso: ordenes.filter(o => o.estado === 'en_proceso').length,
+    completada: ordenes.filter(o => o.estado === 'completada').length
+  };
+  const total = counts.programada + counts.en_proceso + counts.completada;
+  $('donutTotal').textContent = total;
+
+  const colors = {
+    programada: '#8a96ad',
+    en_proceso: '#4f8cff',
+    completada: '#2ee59d'
+  };
+  const labels = {
+    programada: 'Programadas',
+    en_proceso: 'En proceso',
+    completada: 'Completadas'
+  };
+
+  // SVG del donut
+  const cx = 90, cy = 90, r = 70, sw = 22;
+  const C = 2 * Math.PI * r;
+  let offset = 0;
+
+  let segments = '';
+  ['programada','en_proceso','completada'].forEach(k => {
+    const v = counts[k];
+    if (v === 0) return;
+    const len = (v / total) * C;
+    segments += `
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+        stroke="${colors[k]}" stroke-width="${sw}"
+        stroke-dasharray="${len} ${C - len}"
+        stroke-dashoffset="${-offset}"
+        style="transition: stroke-dashoffset 0.8s ease;" />`;
+    offset += len;
+  });
+
+  $('donutSvg').innerHTML = `
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bg-row)" stroke-width="${sw}" />
+    ${segments}`;
+
+  $('donutLegend').innerHTML = ['programada','en_proceso','completada'].map(k => `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${colors[k]}"></div>
+      <div class="legend-label">${labels[k]}</div>
+      <div class="legend-value">${counts[k]}</div>
+    </div>`).join('');
+}
+
+async function cargar() {
+  renderSkeletons();
+  try {
+    ordenes = await apiFetch('GET', '/ordenes');
+    renderKPIs();
+    renderBarChart();
+    renderDonut();
+    aplicarFiltros();
+  } catch (err) {
+    renderError(err.message);
+  }
+}
+
+async function aplicarFiltros() {
+  const buscar = $('buscar').value.trim();
+  const estado = $('filtroEstado').value;
+  const prioridad = $('filtroPrioridad').value;
+  try {
+    const params = new URLSearchParams();
+    if (buscar) params.set('buscar', buscar);
+    if (estado) params.set('estado', estado);
+    if (prioridad) params.set('prioridad', prioridad);
+    const path = '/ordenes' + (params.toString() ? '?' + params : '');
+    listaActual = await apiFetch('GET', path);
+    renderTabla();
+  } catch (err) {
+    renderError(err.message);
+  }
+}
+
+let timer;
+$('buscar').addEventListener('input', () => {
+  clearTimeout(timer);
+  timer = setTimeout(aplicarFiltros, 250);
+});
+$('filtroEstado').addEventListener('change', aplicarFiltros);
+$('filtroPrioridad').addEventListener('change', aplicarFiltros);
+$('btnNueva').addEventListener('click', () => {
+  alert('🚧 Formulario "Nueva orden" se construye en el siguiente paso');
+});
+
+cargar();
+</script>
+</body>
+</html>
